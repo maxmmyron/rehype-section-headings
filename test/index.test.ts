@@ -21,6 +21,7 @@ const p = (...args) => h("p", ...args);
 const span = (...args) => h("span", ...args);
 const div = (...args) => h("div", ...args);
 const aside = (...args) => h("aside", ...args);
+const header = (...args) => h("header", ...args);
 
 describe("without options", () => {
   let processor: Processor<Root, Root, Root, string>;
@@ -889,12 +890,12 @@ describe("with maxHeadingLevel", () => {
   });
 });
 
-describe("with headingWrapElement", () => {
+describe("with headingWrap", () => {
   test("wraps headings based on wrap option", () => {
     // Arrange
     const processorWithOption = rehype()
       .use(rehypeParse, { fragment: true })
-      .use(rehypeSectionHeadings, { wrap: { h1: "div", h2: "aside" } })
+      .use(rehypeSectionHeadings, { headerWrap: { h1: "div", h2: "aside" } })
       .use(rehypeStringify);
 
     // Arrange
@@ -931,7 +932,7 @@ describe("with headingWrapElement", () => {
     // Arrange
     const processorWithOption = rehype()
       .use(rehypeParse, { fragment: true })
-      .use(rehypeSectionHeadings, { wrap: { h1: "div", h2: "aside" } })
+      .use(rehypeSectionHeadings, { headerWrap: { h1: "div", h2: "aside" } })
       .use(rehypeStringify);
 
     // Arrange
@@ -974,7 +975,7 @@ describe("with headingWrapElement", () => {
     // Arrange
     const processorWithOption = rehype()
       .use(rehypeParse, { fragment: true })
-      .use(rehypeSectionHeadings, { wrap: { h1: undefined, h2: "" } })
+      .use(rehypeSectionHeadings, { headerWrap: { h1: undefined, h2: "" } })
       .use(rehypeStringify);
 
     // Arrange
@@ -1012,7 +1013,7 @@ describe("with headingWrapElement", () => {
     const processorWithOption = rehype()
       .use(rehypeParse, { fragment: true })
       .use(rehypeSectionHeadings, {
-        wrap: {
+        headerWrap: {
           h1: {
             type: "element",
             tagName: "div",
@@ -1043,6 +1044,169 @@ describe("with headingWrapElement", () => {
 					p("Lorem ipsum dolor sit amet, consectetur adipiscing elit")]),
 				section(
 					[aside(h2("Heading h2")),
+					p("Lorem ipsum dolor sit amet, consectetur adipiscing elit")]),
+			],
+		);
+
+    // Act
+    processorWithOption.process(original, (_, actual) => {
+      // Assert
+      expect(actual?.value).toStrictEqual(expected);
+    });
+  });
+});
+
+describe("with contentWrap", () => {
+  test("wraps content based on wrap option", () => {
+    // Arrange
+    const processorWithOption = rehype()
+      .use(rehypeParse, { fragment: true })
+      .use(rehypeSectionHeadings, { contentWrap: "main" })
+      .use(rehypeStringify);
+
+    // Arrange
+    // prettier-ignore
+    const original = toHtml(
+			[
+				h1("Heading h1"),
+				p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"),
+				h2("Heading h2"),
+				p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"),
+			],
+		);
+
+    // prettier-ignore
+    const expected = toHtml(
+			[
+				section(
+					[h1("Heading h1"),
+					main(p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"))]),
+				section(
+					[h2("Heading h2"),
+					main(p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"))]),
+			],
+		);
+
+    // Act
+    processorWithOption.process(original, (_, actual) => {
+      // Assert
+      expect(actual?.value).toStrictEqual(expected);
+    });
+  });
+
+  test("wraps content using hast element as wrap option", () => {
+    // Arrange
+    const processorWithOption = rehype()
+      .use(rehypeParse, { fragment: true })
+      .use(rehypeSectionHeadings, {
+        contentWrap: {
+          type: "element",
+          tagName: "main",
+          properties: { className: ["content-wrapper"] },
+          children: [],
+        },
+      })
+      .use(rehypeStringify);
+
+    // Arrange
+    // prettier-ignore
+    const original = toHtml(
+			[
+				h1("Heading h1"),
+				p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"),
+				h2("Heading h2"),
+				p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"),
+			],
+		);
+
+    // prettier-ignore
+    const expected = toHtml(
+			[
+				section(
+					[h1("Heading h1"),
+					main({className: ["content-wrapper"]}, p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"))]),
+				section(
+					[h2("Heading h2"),
+					main({className: ["content-wrapper"]}, p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"))]),
+			],
+		);
+
+    // Act
+    processorWithOption.process(original, (_, actual) => {
+      // Assert
+      expect(actual?.value).toStrictEqual(expected);
+    });
+  });
+
+  test("wraps content with headerWrap option as well", () => {
+    // Arrange
+    const processorWithOption = rehype()
+      .use(rehypeParse, { fragment: true })
+      .use(rehypeSectionHeadings, {
+        contentWrap: "main",
+        headerWrap: {
+          h1: "header",
+          h2: "aside",
+        },
+      })
+      .use(rehypeStringify);
+
+    // Arrange
+    // prettier-ignore
+    const original = toHtml(
+			[
+				h1("Heading h1"),
+				p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"),
+				h2("Heading h2"),
+				p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"),
+			],
+		);
+
+    // prettier-ignore
+    const expected = toHtml(
+			[
+				section(
+					[header(h1("Heading h1")),
+					main(p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"))]),
+				section(
+					[aside(h2("Heading h2")),
+					main(p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"))]),
+			],
+		);
+
+    // Act
+    processorWithOption.process(original, (_, actual) => {
+      // Assert
+      expect(actual?.value).toStrictEqual(expected);
+    });
+  });
+
+  test("does not wrap if property value is undefined or empty string", () => {
+    // Arrange
+    const processorWithOption = rehype()
+      .use(rehypeParse, { fragment: true })
+      .use(rehypeSectionHeadings, { contentWrap: "" })
+      .use(rehypeStringify);
+
+    // Arrange
+    // prettier-ignore
+    const original = toHtml(
+			[
+				h1("Heading h1"),
+				p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"),
+				h2("Heading h2"),
+				p("Lorem ipsum dolor sit amet, consectetur adipiscing elit"),
+			],
+		);
+
+    // prettier-ignore
+    const expected = toHtml(
+			[
+				section(
+					[h1("Heading h1"),
+					p("Lorem ipsum dolor sit amet, consectetur adipiscing elit")]),
+				section(
+					[h2("Heading h2"),
 					p("Lorem ipsum dolor sit amet, consectetur adipiscing elit")]),
 			],
 		);
