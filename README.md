@@ -47,7 +47,7 @@ rehype().use(rehypeSectionHeadings).process(/* html */);
 
 ## Example
 
-The following script..
+The following script...
 
 ```js
 import rehype from "rehype";
